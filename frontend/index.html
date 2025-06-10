@@ -64,7 +64,7 @@
         function subscribeStock(symbol) {
             if (document.getElementById(symbol)) return; // Avoid duplicates
 
-            const eventSource = new EventSource(`/stocks/subscribe/${symbol}`);
+            const eventSource = new EventSource(`http://localhost:8080/stocks/subscribe/${symbol}`);
 
             let stockContainer = document.getElementById("stockContainer");
 
@@ -84,6 +84,7 @@
 
             eventSource.onmessage = function(event) {
                 let stockData = JSON.parse(event.data);
+                console.log("data:",stockData);
                 let priceElement = document.getElementById(`price-${symbol}`);
                 let timeElement = document.getElementById(`time-${symbol}`);
 
