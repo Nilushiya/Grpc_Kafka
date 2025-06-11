@@ -2,9 +2,7 @@ package com.GRPC.grpc.service;
 
 import com.GRPC.grpc.entity.Stock;
 import com.GRPC.grpc.repository.StockRepository;
-import com.javatechie.grpc.StokeRequest;
-import com.javatechie.grpc.StokeResponse;
-import com.javatechie.grpc.StokeTradingServiceGrpc;
+import com.javatechie.grpc.*;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.grpc.server.service.GrpcService;
@@ -49,5 +47,36 @@ public class StockTradingServiceImpl extends StokeTradingServiceGrpc.StokeTradin
         }catch (Exception ex){
             responseObserver.onError(ex);
         }
+    }
+
+    @Override
+    public StreamObserver<StockOrder> bulkStockOrder(StreamObserver<OrderSummary> responseObserver) {
+        return new StreamObserver<StockOrder>(){
+            int total_orders = 0;
+            double total_amount = 0;
+            int success_count = 0;
+            @Override
+            public void onNext(StockOrder stockOrder) {
+                total_orders++;
+                total_amount += stockOrder.getPrice()* stockOrder.getQuantity();
+                success_count++;
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Server unable to process the request : "+ throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                OrderSummary orderSummary = OrderSummary.newBuilder()
+                        .setTotalOrders(total_orders)
+                        .setTotalAmount(total_amount)
+                        .setSuccessCount(success_count)
+                        .build();
+                responseObserver.onNext(orderSummary);
+                responseObserver.onCompleted();
+            }
+        };
     }
 }
