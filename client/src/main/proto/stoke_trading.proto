@@ -9,6 +9,8 @@ service StokeTradingService{
   rpc getStokePrice(StokeRequest) returns (StokeResponse);
 
   rpc subscribeStockPrice(StokeRequest) returns (stream StokeResponse);
+
+  rpc bulkStockOrder(stream StockOrder) returns (OrderSummary);
 }
 
 message StokeRequest{
@@ -19,4 +21,18 @@ message StokeResponse{
   string stock_symbol = 1;
   double price = 2;
   string timestamp = 3;
+}
+
+message StockOrder{
+  string order_id=1;
+  string stock_symbol=2;
+  int32 quantity=3;
+  double price=4;
+  string order_type=5;// BUY or SELL
+}
+
+message OrderSummary{
+  int32  total_orders=1;
+  double total_amount=2;
+  int32 success_count=3;
 }
