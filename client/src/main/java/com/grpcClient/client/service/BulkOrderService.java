@@ -7,11 +7,13 @@ import com.javatechie.grpc.StockOrder;
 import com.javatechie.grpc.StokeTradingServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.client.inject.GrpcClient;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Service
 public class BulkOrderService {
     @GrpcClient("stockService")
     private StokeTradingServiceGrpc.StokeTradingServiceStub stokeTradingServiceStub;
@@ -74,17 +76,17 @@ public class BulkOrderService {
 //    }
 
     public OrderSummaryDTO placeBulkOrders(List<StockOrderDTO> stockOrderDTOS) {
-        CountDownLatch latch = new  CountDownLatch(1);
+        CountDownLatch latch = new  CountDownLatch(1);  //latch is used to block the current thread until the server finishes responding (onCompleted())
         final OrderSummaryDTO[] resultHolder = new OrderSummaryDTO[1];
 
-        StreamObserver<OrderSummaryDTO> orderSummaryRes = new StreamObserver<>(){
+        StreamObserver<OrderSummary> responseObserve = new StreamObserver<>(){
 
             @Override
-            public void onNext(OrderSummaryDTO orderSummary) {
+            public void onNext(OrderSummary orderSummary) {
                 resultHolder[0] = new OrderSummaryDTO();
-                resultHolder[0].setTotal_orders(orderSummary.getTotal_orders());
-                resultHolder[0].setTotal_amount(orderSummary.getTotal_amount());
-                resultHolder[0].setSuccess_count(orderSummary.getSuccess_count());
+                resultHolder[0].setTotal_orders(orderSummary.getTotalOrders());
+                resultHolder[0].setTotal_amount(orderSummary.getTotalAmount());
+                resultHolder[0].setSuccess_count(orderSummary.getSuccessCount());
             }
 
             @Override
@@ -99,10 +101,9 @@ public class BulkOrderService {
             }
         };
 
-        StreamObserver<StockOrder> requestObserver = stokeTradingServiceStub.bulkStockOrder(orderSummaryRes);
+        StreamObserver<StockOrder> requestObserver = stokeTradingServiceStub.bulkStockOrder(responseObserve);
 
         // Convert the DTOs to Protobuf messages and send them
-        StockOrderDTO[] stockOrderDTOs;
         for (StockOrderDTO stockOrderDTO : stockOrderDTOS) {
             StockOrder order = StockOrder.newBuilder()
                     .setOrderId(stockOrderDTO.getOrderId())
